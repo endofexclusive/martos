@@ -59,7 +59,6 @@ typedef struct Node_ {
 } Node;
 
 
-/** Fisk */
 typedef struct MinNode_ {
     struct MinNode_ *next;
     struct MinNode_ *prev;
@@ -102,6 +101,8 @@ typedef struct {
 typedef struct {
     Node node; 
 } Semaphore;
+
+
 /**
 \brief Unlink node from list.
 
@@ -212,7 +213,8 @@ List *list_apply(
 );
 
 
-/** Prepare a task for scheduling.
+/**
+\brief Prepare a task for scheduling.
 
 Private Task fields are set. The task is not scheduled for
 execution: use task_schedule() to do so.
@@ -241,7 +243,8 @@ void task_init(
 );
 
 
-/** Schedule a task for execution.
+/**
+\brief Schedule a task for execution.
 
 Add the task to the scheduler so that it may run.
 \param task The task to schedule.
@@ -249,7 +252,8 @@ Add the task to the scheduler so that it may run.
 void task_schedule(Task *const task);
 
 
-/** Unschedule task.
+/**
+\brief Unschedule task.
 
 Remove the task from the scheduler so that it will not run
 again, until it is added again with task_schedule().
@@ -271,7 +275,8 @@ if there was no match.
 Task *task_find(char *const name);
 
 
-/** Set scheduling priority of a task.
+/**
+\brief Set scheduling priority of a task.
 
 \param task The task to set priority of.
 \param prio New priority of task.
@@ -279,7 +284,8 @@ Task *task_find(char *const name);
 void task_set_prio(Task *const task, const Node_Prio prio);
 
 
-/** Allocate signal bit.
+/**
+\brief Allocate signal bit.
 
 \param signal The signal bit, >=0, to allocate, or -1 for any
 bit. The following must hold: -1 <= signals < SIGNALS_WIDTH.
@@ -290,22 +296,28 @@ or -1 if no signal bit could be allocated.
 SignalNumber task_allocate_signal(SignalNumber signal);
 
 
-/** Free a signal bit. */
+/**
+\brief Free a signal bit.
+*/
 void task_free_signal(const SignalNumber signal);
 
 
-/** Send bit signals to a task.
+/**
+\brief Send bit signals to a task.
 
 This function is callable from interrupt context. */
 void task_signal(Task *const task, const Signals signals);
 
 
-/** Wait - Wait for bit signals.  */
+/**
+\brief Wait for bit signals.
+*/
 Signals task_wait(const Signals signals);
 
 
-/** Callback function for initialization of the first task to
-be scheduled.
+/**
+\brief Callback function for initialization of the first task
+to be scheduled.
 
 This function is for the purpose of the user to select a
 task to run att system start.  Only a call to task_init()
@@ -329,7 +341,8 @@ void enable(void);
 void sem_init(Semaphore *const sem, int value);
 
 
-/** Signal a semaphore.
+/**
+\brief Signal a semaphore.
 
 value := value + 1
 IF value = 0 THEN unblock a client.
@@ -337,12 +350,43 @@ IF value = 0 THEN unblock a client.
 void sem_signal(Semaphore *const sem);
 
 
-/** Wait on semaphore.
+/**
+\brief Wait on semaphore.
 
 value := value - 1
 IF value < 0 THEN block.
 */
 void sem_wait(Semaphore *const sem);
+
+
+typedef enum {
+    MSGPORT_SIGNAL,
+    MSGPORT_IGNORE
+} MsgPort_Flags;
+
+typedef struct {
+    Node node;
+    MsgPort_Flags flags;
+    /* A single signal used for communication on this port. */
+    Signals signal;
+    Task *signal_task;
+    List message_list;
+} MsgPort;
+
+typedef struct {
+    Node node;
+    MsgPort *reply_port;
+} Message;
+
+/**
+\brief Initialize a message port before use.
+
+*/
+bool msgport_init(MsgPort *const port);
+Message *msgport_wait(MsgPort *const port);
+Message *msgport_get(MsgPort *const port);
+void msgport_put(MsgPort *const port, Message *const message);
+void msgport_reply(Message *const message);
 
 #endif
 

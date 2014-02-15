@@ -88,6 +88,7 @@ PRIVATE void reschedule(void)
     SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
+/* Override standard library abort(). */
 void abort(void)
 {
     while(1) {

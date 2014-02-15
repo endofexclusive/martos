@@ -52,9 +52,10 @@ ifdef ONE_NAMESPACE
     OBJS+=martos.o
 else
     OBJS+=data.o
+    OBJS+=platform.o
     OBJS+=list.o
     OBJS+=task.o
-    OBJS+=platform.o
+    OBJS+=msgport.o
 endif
 
 OBJS+=system_stm32f4xx.o

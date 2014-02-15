@@ -36,7 +36,8 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "platform_protos.h"
 
 #include "data.c"
+#include <platform.c>
 #include "list.c"
 #include "task.c"
-#include <platform.c>
+#include "msgport.c"
 
