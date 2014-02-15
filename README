@@ -1,0 +1,18 @@
+M - A Real-Time Operating System
+
+MARTOS is a microkernel loosely modelled on the Amiga ROM
+Operating System. MARTOS has support for low level signalling,
+semaphores and message queues with blocking and non-blocking
+operations.
+
+The kernel is platform independent and easy to port.  Ports
+exist for ARM Cortex-M4 (STM32F407/417 microcontroller as
+found on the STM32F4DISCOVERY development board).
+
+Original author is Martin Åberg. He can be contacted
+through electronic mail (remove spaces):
+
+The project is licensed under a BSD license.
+
+m ar t in AT f ri p os t DOT o rg
+
