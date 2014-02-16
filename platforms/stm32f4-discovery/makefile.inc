@@ -56,6 +56,7 @@ else
     OBJS+=list.o
     OBJS+=task.o
     OBJS+=msgport.o
+    OBJS+=timer.o
 endif
 
 OBJS+=system_stm32f4xx.o

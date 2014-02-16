@@ -50,9 +50,13 @@ extern List ready;
 /* FIXME: What about tasks waiting on semaphores? */
 extern List waiting;
 
+/** List for timer requests. */
+extern List timers;
+
 #endif
 
 /* Verify that task structure is valid. */
 PRIVATE void task_verify(Task *const task);
+PRIVATE void timer_poll(void);
 
 #endif

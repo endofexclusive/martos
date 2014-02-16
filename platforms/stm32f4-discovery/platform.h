@@ -25,8 +25,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef TASKCONTEXT_H
-#define TASKCONTEXT_H
+#ifndef PLATFORM_H
+#define PLATFORM_H
 
 #include <stdint.h>
 
@@ -44,6 +44,8 @@ typedef struct {
     void *bos;
     void *tos;
 } TaskContext;
+
+typedef uint32_t Ticks;
 
 #endif
 

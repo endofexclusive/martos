@@ -2,8 +2,8 @@ include/martos/martos.h
 This file contains the external interface of the kernel, both
 function prototypes and type definitions. It is documented
 in Doxygen format. Everything in the file is platform
-independent. However, it depends on the following platform
-dependent type definitions: TaskContext.
+independent. However, it depends on the platform dependent
+defintions in platforms/<PLATFORM>/platform.h
 
 
 src/default_config.h
@@ -24,7 +24,8 @@ src/private.h
 Here are privatede declarations for source files in src/ dir.
 
 
-platforms/<PLATFORM>/taskcontext.h
-Definition of the TaskContext type used to hold low-level
-information of a task.
+platforms/<PLATFORM>/platform.h
+Definition of platform dependent types: TaskContext which
+hold low-level information of a task, Ticks which represents
+timer ticks.
 

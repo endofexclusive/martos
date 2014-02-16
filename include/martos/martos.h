@@ -30,7 +30,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <taskcontext.h>
+#include <platform.h>
 
 /** \file */
 
@@ -98,10 +98,32 @@ typedef struct {
 } Task;
 
 
+typedef enum {
+    MSGPORT_SIGNAL,
+    MSGPORT_IGNORE
+} MsgPort_Action;
+
+typedef struct {
+    Node node;
+    List message_list;
+    Task *signal_task;
+    /* A single signal used for communication on this port. */
+    Signals signal;
+    MsgPort_Action action;
+} MsgPort;
+
+
+typedef struct {
+    Node node;
+    MsgPort *reply_port;
+} Message;
+
+
+#if 0
 typedef struct {
     Node node; 
 } Semaphore;
-
+#endif
 
 /**
 \brief Unlink node from list.
@@ -159,9 +181,21 @@ The list is not modified.
 \param list The list to get head of.
 \return Head of list.
 */
-
-
 Node *list_get_head(List *const list);
+
+
+/**
+\brief Insert a node into a list.
+
+The node is inserted in list after a given node.
+
+\param list The list to insert into.
+\param node The node to insert.
+\param prev Insert node after this node. If NULL, then node
+is inserted at head of list.
+*/
+void list_insert(List *const list, Node *const node, Node *const prev);
+
 
 
 /**
@@ -173,7 +207,6 @@ priority lower than parameter node.
 \param list The list to insert into.
 \param node The node to insert.
 */
-
 void list_enqueue(List *const list, Node *const node);
 
 
@@ -337,7 +370,7 @@ void disable(void);
 
 void enable(void);
 
-
+#if 0
 void sem_init(Semaphore *const sem, int value);
 
 
@@ -357,36 +390,107 @@ value := value - 1
 IF value < 0 THEN block.
 */
 void sem_wait(Semaphore *const sem);
+#endif
 
-
-typedef enum {
-    MSGPORT_SIGNAL,
-    MSGPORT_IGNORE
-} MsgPort_Flags;
-
-typedef struct {
-    Node node;
-    MsgPort_Flags flags;
-    /* A single signal used for communication on this port. */
-    Signals signal;
-    Task *signal_task;
-    List message_list;
-} MsgPort;
-
-typedef struct {
-    Node node;
-    MsgPort *reply_port;
-} Message;
 
 /**
 \brief Initialize a message port before use.
 
 */
 bool msgport_init(MsgPort *const port);
+
+
 Message *msgport_wait(MsgPort *const port);
+
+
 Message *msgport_get(MsgPort *const port);
+
+
 void msgport_put(MsgPort *const port, Message *const message);
+
+
 void msgport_reply(Message *const message);
+
+
+typedef enum {
+    TIMER_NONE,
+    TIMER_DELAY,
+    TIMER_ALARM
+} Timer_Operation;
+
+typedef enum {
+    TIMER_INVALID,
+    TIMER_INITIALIZED,
+    TIMER_ADDED,
+    TIMER_DONE,
+    TIMER_ABORTED
+} Timer_Status;
+
+typedef struct {
+    Node node;
+    Task *signal_task;
+    /** The task will be signalled on this signal by the
+    timer. */
+    Signals signal;
+    /** The number of timer ticks to delay when operation =
+    TIMER_DELAY. */
+    Ticks delay;
+    /** The timer tick at which task will be signalled signal
+    when operation = TIMER_ALARM. */
+    Ticks tick;
+    Timer_Operation operation;
+    Timer_Status status;
+} Timer;
+
+
+/**
+\brief Wait for a specified number of timer ticks.
+
+\param ticks The number of ticks to wait for.
+*/
+void timer_delay(Ticks ticks);
+
+
+/**
+\brief Get the current timer tick.
+
+\return system tick.
+*/
+Ticks timer_clock(void);
+
+
+/** Allocate resources for Timer and prepare it.
+*/
+void timer_allocate(Timer *timer);
+
+
+void timer_free(Timer *timer);
+
+
+/**
+\brief Add timer request to timer queue.
+
+After the request has been added it can be waited for by
+issuing wait() on the timer->signal.
+
+These following conditions must be fulfilled to successfully
+add the request:
+
+- If operation = TIMER_DELAY then timer->delay must be set.
+
+- If operation = TIMER_ALARM then timer->tick must be set.
+
+\param timer The Timer to add.
+*/
+void timer_add(Timer *timer);
+
+
+/**
+\brief Abort a timer request.
+
+\param timer The previoiusly added request to abort.
+*/
+void timer_abort(Timer *timer);
 
 #endif
 

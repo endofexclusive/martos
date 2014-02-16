@@ -40,4 +40,5 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "list.c"
 #include "task.c"
 #include "msgport.c"
+#include "timer.c"
 

@@ -40,5 +40,11 @@ PRIVATE void taskcontext_verify(TaskContext *const context);
 
 PRIVATE void reschedule(void);
 
+PRIVATE void timer_init(void);
+
+/* The timers queue has got a new head. This function is called
+in disabled state. */
+PRIVATE void timer_update(void);
+
 #endif
 

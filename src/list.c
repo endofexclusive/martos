@@ -27,6 +27,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stddef.h>
 #include <string.h>
+#include <assert.h>
 #include <martos/martos.h>
 
 void node_unlink(Node *const node)
@@ -78,6 +79,26 @@ Node *list_get_head(List *const list)
         return NULL;
     } else {
         return (Node *) list->head.next;
+    }
+}
+
+void list_insert(List *const list, Node *const node, Node *const prev)
+{
+    if (NULL == prev) {
+        /* No prev node given, fall back on list_add_head(). */
+        assert(true);
+        #if 0
+        list_add_head(list, node);
+        #endif
+    } else if (NULL != prev->next) {
+        /* Normal node */
+        node->next = prev->next;
+        node->prev = prev;
+        prev->next->prev = node;
+        prev->next = node;
+    } else {
+        /* Last node */
+        list_add_tail(list, node);
     }
 }
 

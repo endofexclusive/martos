@@ -28,19 +28,10 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <martos/martos.h>
 #include "private.h"
 
-/** Interrupt disable nest count. */
 PRIVATE NestCnt id_nestcnt;
-
-/** Number of ticks left for task in round-robin. */
 PRIVATE uint_fast8_t elapsed;
-
-/** The currently running task. */
 PRIVATE Task *running;
-
-/** All ready tasks must be on the waiting queue. */
 PRIVATE List ready;
-
-/** All non-ready tasks must be on the waiting queue. */
-/** FIXME: What about tasks waiting on semaphores? */
 PRIVATE List waiting;
+PRIVATE List timers;
 

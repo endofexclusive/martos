@@ -44,7 +44,7 @@ bool msgport_init(MsgPort *const port)
     }
     port->node.name = NULL;
     port->node.prio = 0;
-    port->flags = MSGPORT_SIGNAL;
+    port->action = MSGPORT_SIGNAL;
     port->signal = 1 << signal_bit;
     port->signal_task = running;
     list_init((&port->message_list));
@@ -88,7 +88,7 @@ void msgport_put(MsgPort *const port, Message *const message)
     list_add_tail(&port->message_list, (Node *) message);
     /* Assume only port owner modifies non-list fields. */
     if ((NULL != port->signal_task) &&
-      (MSGPORT_SIGNAL == port->flags)) {
+      (MSGPORT_SIGNAL == port->action)) {
         /* A task exists that waits for messages on this
         port. */
         task_signal(port->signal_task, 1 << port->signal);

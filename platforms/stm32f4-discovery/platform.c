@@ -132,6 +132,7 @@ void enable(void)
 StackFrame *martos_init(void) {
     list_init(&ready);
     list_init(&waiting);
+    list_init(&timers);
     id_nestcnt = -1;
     elapsed = QUANTUM;
 
@@ -251,3 +252,21 @@ PRIVATE void (*const vector_table[])(void)
     /* IRQ */
 };
 
+PRIVATE void timer_init(void)
+{
+}
+
+Ticks timer_clock(void)
+{
+    return 1;
+}
+
+PRIVATE void timer_update(void)
+{
+    /* Trig interrupt. */
+}
+
+static void TIMx_Handler(void)
+{
+    timer_poll();
+}
