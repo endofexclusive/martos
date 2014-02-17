@@ -30,7 +30,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <martos/martos.h>
 
-void node_unlink(Node *const node)
+void list_unlink(Node *const node)
 {
     node->prev->next = node->next;
     node->next->prev = node->prev;
@@ -68,7 +68,7 @@ Node *list_rem_head(List *const list)
     node = list_get_head(list);
 
     if (NULL != node) {
-        node_unlink(node);
+        list_unlink(node);
     }
     return node;
 }

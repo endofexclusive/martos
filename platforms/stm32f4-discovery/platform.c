@@ -29,6 +29,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <assert.h>
 #include <stm32f4xx.h>
+#include <stm32f4xx_conf.h>
 #include <martos/martos.h>
 #include <private.h>
 #include <platform_protos.h>
@@ -129,6 +130,19 @@ void enable(void)
     }
 }
 
+void led_init(void)
+{
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+    GPIO_InitTypeDef gpioStructure;
+    gpioStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13;
+    gpioStructure.GPIO_Mode = GPIO_Mode_OUT;
+    gpioStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOD, &gpioStructure);
+
+    GPIO_WriteBit(GPIOD, GPIO_Pin_12 | GPIO_Pin_13, Bit_RESET);
+}
+
 StackFrame *martos_init(void) {
     list_init(&ready);
     list_init(&waiting);
@@ -149,6 +163,7 @@ StackFrame *martos_init(void) {
     /* FIXME: NVIC_SetPriority is called in SysTick_Config...*/
     /* High priority? */
     NVIC_SetPriority(SysTick_IRQn, 0);
+    led_init();
 
     __set_PSP((uint32_t) it->context.frame);
     return it->context.frame;
@@ -157,6 +172,7 @@ StackFrame *martos_init(void) {
 static void SysTick_Handler(void)
 {
     elapsed--;
+
     if (0 == elapsed) {
         SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
     }
@@ -212,6 +228,54 @@ void *PendSV_Handler_user(StackFrame *old_frame)
     return running->context.frame;
 }
 
+static volatile Ticks timer_now;
+
+PRIVATE void timer_init(void)
+{
+    timer_now = 0;
+
+    /* Set up hardware to generate timer interrupts. */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+
+    TIM_TimeBaseInitTypeDef timerInitStructure;
+    timerInitStructure.TIM_Prescaler = 28 - 1; // 1MHz timebase
+    timerInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    timerInitStructure.TIM_Period = 1000-1;
+    timerInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+    timerInitStructure.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM2, &timerInitStructure);
+    TIM_Cmd(TIM2, ENABLE);
+    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+
+    NVIC_InitTypeDef nvicStructure;
+    nvicStructure.NVIC_IRQChannel = TIM2_IRQn;
+    nvicStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    nvicStructure.NVIC_IRQChannelSubPriority = 1;
+    nvicStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&nvicStructure);
+
+    //TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+}
+
+Ticks timer_get_clock(void)
+{
+    return timer_now;
+}
+
+PRIVATE void timer_update(void)
+{
+    /* Trig interrupt. */
+}
+
+static void TIM2_IRQHandler(void)
+{
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
+        timer_now++;
+        timer_poll();
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+    }
+}
+
 static void Default_Handler(void)
 {
     for(;;);
@@ -248,25 +312,66 @@ PRIVATE void (*const vector_table[])(void)
     /* PendSV */
     PendSV_Handler,
     /* SysTick */
-    SysTick_Handler
-    /* IRQ */
+    SysTick_Handler,
+/* IRQ */
+ 
+/* WWDG_IRQHandler */
+    Default_Handler,
+/* PVD_IRQHandler */
+    Default_Handler,
+/* TAMP_STAMP_IRQHandler */
+    Default_Handler,
+/* RTC_WKUP_IRQHandler */
+    Default_Handler,
+/* FLASH_IRQHandler */
+    Default_Handler,
+/* RCC_IRQHandler */
+    Default_Handler,
+/* EXTI0_IRQHandler */
+    Default_Handler,
+/* EXTI1_IRQHandler */
+    Default_Handler,
+/* EXTI2_IRQHandler */
+    Default_Handler,
+/* EXTI3_IRQHandler */
+    Default_Handler,
+/* EXTI4_IRQHandler */
+    Default_Handler,
+/* DMA1_Stream0_IRQHandler */
+    Default_Handler,
+/* DMA1_Stream1_IRQHandler */
+    Default_Handler,
+/* DMA1_Stream2_IRQHandler */
+    Default_Handler,
+/* DMA1_Stream3_IRQHandler */
+    Default_Handler,
+/* DMA1_Stream4_IRQHandler */
+    Default_Handler,
+/* DMA1_Stream5_IRQHandler */
+    Default_Handler,
+/* DMA1_Stream6_IRQHandler */
+    Default_Handler,
+/* ADC_IRQHandler */
+    Default_Handler,
+/* CAN1_TX_IRQHandler */
+    Default_Handler,
+/* CAN1_RX0_IRQHandler */
+    Default_Handler,
+/* CAN1_RX1_IRQHandler */
+    Default_Handler,
+/* CAN1_SCE_IRQHandler */
+    Default_Handler,
+/* EXTI9_5_IRQHandler */
+    Default_Handler,
+/* TIM1_BRK_TIM9_IRQHandler */
+    Default_Handler,
+/* TIM1_UP_TIM10_IRQHandler */
+    Default_Handler,
+/* TIM1_TRG_COM_TIM11_IRQHandler */
+    Default_Handler,
+/* TIM1_CC_IRQHandler */
+    Default_Handler,
+/* TIM2_IRQHandler */
+    TIM2_IRQHandler
 };
 
-PRIVATE void timer_init(void)
-{
-}
-
-Ticks timer_clock(void)
-{
-    return 1;
-}
-
-PRIVATE void timer_update(void)
-{
-    /* Trig interrupt. */
-}
-
-static void TIMx_Handler(void)
-{
-    timer_poll();
-}

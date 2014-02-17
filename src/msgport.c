@@ -38,7 +38,7 @@ bool msgport_init(MsgPort *const port)
 {
     SignalNumber signal_bit;
 
-    signal_bit = task_allocate_signal(-1);
+    signal_bit = signal_allocate(-1);
     if (-1 == signal_bit) {
         return false;
     }
@@ -46,7 +46,7 @@ bool msgport_init(MsgPort *const port)
     port->node.prio = 0;
     port->action = MSGPORT_SIGNAL;
     port->signal = 1 << signal_bit;
-    port->signal_task = running;
+    port->task = running;
     list_init((&port->message_list));
     return true;
 }
@@ -58,7 +58,7 @@ Message *msgport_wait(MsgPort *const port)
 
     disable();
     while (list_is_empty(&port->message_list)) {
-        task_wait(port->signal);
+        signal_wait(port->signal);
     }
     /* List is not empty so we can peek it. */
     msg = (Message *) port->message_list.head.next;
@@ -87,11 +87,11 @@ void msgport_put(MsgPort *const port, Message *const message)
     disable();
     list_add_tail(&port->message_list, (Node *) message);
     /* Assume only port owner modifies non-list fields. */
-    if ((NULL != port->signal_task) &&
+    if ((NULL != port->task) &&
       (MSGPORT_SIGNAL == port->action)) {
         /* A task exists that waits for messages on this
         port. */
-        task_signal(port->signal_task, 1 << port->signal);
+        signal_send(port->task, 1 << port->signal);
     }
     enable();
 }

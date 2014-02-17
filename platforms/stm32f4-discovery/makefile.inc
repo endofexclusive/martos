@@ -34,7 +34,7 @@ LDFLAGS+= -nostartfiles -T$(LDSCRIPT) -mcpu=cortex-m4 -mthumb -Wl,-Map=linker.ma
 
 CFLAGS+= -std=c99
 CFLAGS+= -mcpu=cortex-m4 -mthumb
-CFLAGS+= -DHSE_VALUE=8000000
+#CFLAGS+= -DHSE_VALUE=8000000
 CFLAGS+= -I$(PLATFORM_ROOT)
 CFLAGS+= -I$(MARTOS_ROOT)/src
 CFLAGS+= -I$(MARTOS_ROOT)/include
@@ -60,6 +60,10 @@ else
 endif
 
 OBJS+=system_stm32f4xx.o
+OBJS+=stm32f4xx_gpio.o
+OBJS+=stm32f4xx_rcc.o
+OBJS+=stm32f4xx_tim.o
+OBJS+=misc.o
 OBJS+=reset_handler.o
 OBJS+=pendsv_handler.o
 

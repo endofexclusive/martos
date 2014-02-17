@@ -55,7 +55,6 @@ typedef struct Node_ {
     list_find() and similar functions. */
     char *name;
     Node_Prio prio;
-    /* type Node_Type; */
 } Node;
 
 
@@ -78,53 +77,6 @@ typedef struct {
 } List;
 
 
-typedef enum {
-    TASK_INVALID,
-    TASK_INITIALIZED,
-    TASK_RUNNING,
-    TASK_READY,
-    TASK_WAITING
-} Task_State;
-
-typedef struct {
-    Node node;
-    TaskContext context;
-    Signals sig_alloc;
-    /* sig_wait is valid only if state = TS_WAIT. */
-    Signals sig_wait;
-    Signals sig_recvd;
-    NestCnt id_nestcnt;
-    Task_State state;
-} Task;
-
-
-typedef enum {
-    MSGPORT_SIGNAL,
-    MSGPORT_IGNORE
-} MsgPort_Action;
-
-typedef struct {
-    Node node;
-    List message_list;
-    Task *signal_task;
-    /* A single signal used for communication on this port. */
-    Signals signal;
-    MsgPort_Action action;
-} MsgPort;
-
-
-typedef struct {
-    Node node;
-    MsgPort *reply_port;
-} Message;
-
-
-#if 0
-typedef struct {
-    Node node; 
-} Semaphore;
-#endif
-
 /**
 \brief Unlink node from list.
 
@@ -132,13 +84,13 @@ The modified list is implicit.
 
 \param node The node to unlink.
 */
-void node_unlink(Node *const node);
+void list_unlink(Node *const node);
 
 
 /**
 \brief Prepare a list for list operations.
 
-This function must be applied to the node before any other
+This function must be applied to the list before any other
 list operation can take place.
 
 \param list The list to initialize.
@@ -197,7 +149,6 @@ is inserted at head of list.
 void list_insert(List *const list, Node *const node, Node *const prev);
 
 
-
 /**
 \brief Enqueue node in list.
 
@@ -225,6 +176,7 @@ was found.
 Node *list_find(List *const start, char *const name);
 
 
+#if 0
 /**
 \brief Call a function on all nodes on a list.
 
@@ -244,6 +196,44 @@ List *list_apply(
     bool (*fn)(Node *const node, void *const arg),
     void *const arg
 );
+#endif
+
+
+/**
+\brief Disable interrupts.
+
+Disabling of interrupts nest. Each disable() must be paired
+with an enable().
+*/
+void disable(void);
+
+
+/**
+\brief Enable interrupts.
+
+Each enable() must be preceded by a disable().
+*/
+void enable(void);
+
+
+typedef enum {
+    TASK_INVALID,
+    TASK_INITIALIZED,
+    TASK_RUNNING,
+    TASK_READY,
+    TASK_WAITING
+} Task_State;
+
+typedef struct {
+    Node node;
+    TaskContext context;
+    Signals sig_alloc;
+    /* sig_wait is valid only if state = TS_WAIT. */
+    Signals sig_wait;
+    Signals sig_recvd;
+    NestCnt id_nestcnt;
+    Task_State state;
+} Task;
 
 
 /**
@@ -254,11 +244,9 @@ execution: use task_schedule() to do so.
 
 \param task The task to initialize.
 \param name String identifier of task. It may be NULL.
-\param prio Pre-emptive scheduling priority of task. A
-larger number gives higher scheduling priority. The lowest
-permitted value is TASK_PRIO_MIN and the largest is
-TASK_PRIO_MAX. TASK_PRIO_EXCLUSIVE is reserved and
-not allowed for this function.
+\param prio Pre-emptive scheduling priority of task. A larger
+number gives higher scheduling priority. The lowest permitted
+value is TASK_PRIO_MIN and the largest is TASK_PRIO_MAX.
 \param init_pc Execution entry point of task. The routine must
 never return.
 \param user_data Optional parameter to execution entry point.
@@ -280,25 +268,16 @@ void task_init(
 \brief Schedule a task for execution.
 
 Add the task to the scheduler so that it may run.
+
 \param task The task to schedule.
 */
 void task_schedule(Task *const task);
 
 
 /**
-\brief Unschedule task.
-
-Remove the task from the scheduler so that it will not run
-again, until it is added again with task_schedule().
-\param task The task to schedule.
-*/
-void task_unschedule(Task *const task);
-
-
-/**
 \brief Find task by name or find self.
 
-Task queues are searched for a task with given name.
+System task queues are searched for a task with given name.
 
 \param name The task name to match, or NULL to find the
 calling task.
@@ -326,26 +305,26 @@ bit. The following must hold: -1 <= signals < SIGNALS_WIDTH.
 \return Allocated signal bit in the range 0..SIGNALS_WIDTH -1,
 or -1 if no signal bit could be allocated.
 */
-SignalNumber task_allocate_signal(SignalNumber signal);
+SignalNumber signal_allocate(SignalNumber signal);
 
 
 /**
-\brief Free a signal bit.
+\brief Free signal bits.
 */
-void task_free_signal(const SignalNumber signal);
+void signal_free(const Signals signals);
 
 
 /**
 \brief Send bit signals to a task.
 
 This function is callable from interrupt context. */
-void task_signal(Task *const task, const Signals signals);
+void signal_send(Task *const task, const Signals signals);
 
 
 /**
 \brief Wait for bit signals.
 */
-Signals task_wait(const Signals signals);
+Signals signal_wait(const Signals signals);
 
 
 /**
@@ -365,37 +344,29 @@ can be called. Only the list_ functions are considered safe.
 on the task in init_task_init()!  */
 Task *init_task_init(void);
 
-void disable(void);
+
+typedef enum {
+    MSGPORT_SIGNAL,
+    MSGPORT_IGNORE
+} MsgPort_Action;
+
+typedef struct {
+    Node node;
+    List message_list;
+    Task *task;
+    Signals signal;
+    MsgPort_Action action;
+} MsgPort;
 
 
-void enable(void);
-
-#if 0
-void sem_init(Semaphore *const sem, int value);
-
-
-/**
-\brief Signal a semaphore.
-
-value := value + 1
-IF value = 0 THEN unblock a client.
-*/
-void sem_signal(Semaphore *const sem);
-
-
-/**
-\brief Wait on semaphore.
-
-value := value - 1
-IF value < 0 THEN block.
-*/
-void sem_wait(Semaphore *const sem);
-#endif
+typedef struct {
+    Node node;
+    MsgPort *reply_port;
+} Message;
 
 
 /**
 \brief Initialize a message port before use.
-
 */
 bool msgport_init(MsgPort *const port);
 
@@ -406,7 +377,7 @@ Message *msgport_wait(MsgPort *const port);
 Message *msgport_get(MsgPort *const port);
 
 
-void msgport_put(MsgPort *const port, Message *const message);
+void msgport_send(MsgPort *const port, Message *const message);
 
 
 void msgport_reply(Message *const message);
@@ -428,17 +399,17 @@ typedef enum {
 
 typedef struct {
     Node node;
-    Task *signal_task;
-    /** The task will be signalled on this signal by the
-    timer. */
+    Task *task;
+    /** The task will be sent this signal by the timer
+    service. */
     Signals signal;
-    /** The number of timer ticks to delay when operation =
+    /** The number of timer ticks to delay when op =
     TIMER_DELAY. */
     Ticks delay;
     /** The timer tick at which task will be signalled signal
-    when operation = TIMER_ALARM. */
+    when op = TIMER_ALARM. */
     Ticks tick;
-    Timer_Operation operation;
+    Timer_Operation op;
     Timer_Status status;
 } Timer;
 
@@ -456,7 +427,7 @@ void timer_delay(Ticks ticks);
 
 \return system tick.
 */
-Ticks timer_clock(void);
+Ticks timer_get_clock(void);
 
 
 /** Allocate resources for Timer and prepare it.

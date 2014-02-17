@@ -38,22 +38,22 @@ void timer_allocate(Timer *timer)
 {
     SignalNumber signum;
 
-    timer->signal_task = running;
+    timer->task = running;
 
-    signum = task_allocate_signal(-1);
+    signum = signal_allocate(-1);
     assert(-1 != signum);
     timer->signal = 1 << signum;
 
-    timer->operation = TIMER_NONE;
+    timer->op = TIMER_NONE;
     timer->status = TIMER_INITIALIZED;
 }
 
 void timer_free(Timer *timer)
 {
-    timer->signal_task = NULL;
+    timer->task = NULL;
     /* Deallocate signal. */
-    assert(true);
-    timer->operation = TIMER_NONE;
+    signal_free(timer->signal);
+    timer->op = TIMER_NONE;
     timer->status = TIMER_INVALID;
 }
 
@@ -62,11 +62,11 @@ void timer_delay(Ticks ticks)
     Timer timer;
 
     timer_allocate(&timer);
-    timer.operation = TIMER_DELAY;
+    timer.op = TIMER_DELAY;
     timer.delay = ticks;
     timer_add(&timer);
     if (TIMER_ADDED == timer.status) {
-        task_wait(timer.signal);
+        signal_wait(timer.signal);
     } else {
         /* Already elapsed. */
     }
@@ -76,8 +76,8 @@ void timer_delay(Ticks ticks)
 void timer_add(Timer *timer)
 {
     assert(
-      TIMER_DELAY == timer->operation ||
-      TIMER_ALARM == timer->operation
+      TIMER_DELAY == timer->op ||
+      TIMER_ALARM == timer->op
     );
     assert(
       TIMER_INITIALIZED == timer->status ||
@@ -85,15 +85,14 @@ void timer_add(Timer *timer)
       TIMER_ABORTED == timer->status
     );
 
-    if (TIMER_DELAY == timer->operation) {
-        assert(0 != timer->tick);
-        timer->tick = timer_clock() + timer->delay;
+    if (TIMER_DELAY == timer->op) {
+        timer->tick = timer_get_clock() + timer->delay;
     } else {
         /* Tick was already set. */
     }
 
     /* Check if timer->tick has already elapsed. */
-    if (timer->tick <= timer_clock()) {
+    if (timer->tick <= timer_get_clock()) {
         timer->status = TIMER_ABORTED;
         return;
     }
@@ -125,16 +124,18 @@ void timer_add(Timer *timer)
     }
     timer->status = TIMER_ADDED;
 
+    #if 0
     if (list_get_head(&timers) == &timer->node) {
         /* Timer ended up in head of the queue so we must
         notify the timer hardware. */
         timer_update();
     }
+    #endif
 }
 
 PRIVATE void timer_poll(void)
 {
-    Ticks now = timer_clock();
+    Ticks now = timer_get_clock();
 
     Timer *tnode;
 
@@ -146,8 +147,8 @@ PRIVATE void timer_poll(void)
             break;
         }
         /* Tick in tnode is greater than now. Remove and signal. */
-        node_unlink(&tnode->node);
-        task_signal(tnode->signal_task, tnode->signal);
+        list_unlink(&tnode->node);
+        signal_send(tnode->task, tnode->signal);
         /* Next. */
         tnode = (Timer *) tnode->node.next;
     }

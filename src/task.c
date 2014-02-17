@@ -47,7 +47,6 @@ void task_init(
     task->state = TASK_INVALID;
     assert(NULL == task_find(name));
     task->node.name = name;
-    /* No check for TASK_PRIO_EXCLUSIVE. */
     task->node.prio = prio;
     task->sig_alloc = SIGF_SINGLE;
     task->sig_wait = 0;
@@ -66,16 +65,6 @@ void task_schedule(Task *const task)
     enable();
     reschedule();
 }
-
-#if 0
-void task_unschedule(Task *const task)
-{
-    /* If self, set a task state such that the scheduler will
-    remove the task. Then call scheduler. If not self, then unlink. */
-    disable();
-    enable();
-}
-#endif
 
 Task *task_find(char *const name)
 {
@@ -112,7 +101,7 @@ void task_set_prio(Task *const task, const Node_Prio prio)
     enable();
 }
 
-SignalNumber task_allocate_signal(SignalNumber signal)
+SignalNumber signal_allocate(SignalNumber signal)
 {
     assert(-1 <= signal && signal < SIGNALS_WIDTH);
     Signals target;
@@ -157,17 +146,16 @@ SignalNumber task_allocate_signal(SignalNumber signal)
     return signal;
 }
 
-void task_free_signal(const SignalNumber signal)
+void signal_free(const Signals signals)
 {
-    assert(0 <= signal && signal < SIGNALS_WIDTH);
-    Signals target;
-
-    target = 1 << signal;
-    assert(running->sig_alloc & target);
-    running->sig_alloc &= ~target;
+    /* Do not free SIGF_SINGLE! */
+    assert((signals & SIGF_SINGLE) == 0);
+    /* Do not free unallocated signals. */
+    assert((signals & running->sig_alloc) == signals);
+    running->sig_alloc &= ~signals;
 }
 
-void task_signal(Task *const task, const Signals signals)
+void signal_send(Task *const task, const Signals signals)
 {
     disable();
     task->sig_recvd |= signals;
@@ -175,7 +163,7 @@ void task_signal(Task *const task, const Signals signals)
         && (signals & task->sig_wait)) {
         /* We have set signals which the task was waiting
         for. Take out of waiting list.  */
-        node_unlink((Node *) task);
+        list_unlink((Node *) task);
         /* Move signalled task to ready list. */
         task->state = TASK_READY;
         list_enqueue(&ready, (Node *) task);
@@ -193,7 +181,7 @@ void task_signal(Task *const task, const Signals signals)
     enable();
 }
 
-Signals task_wait(const Signals signals)
+Signals signal_wait(const Signals signals)
 {
     Signals rcvd;
     int16_t nestcnt;
