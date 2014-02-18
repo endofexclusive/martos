@@ -32,3 +32,8 @@ ready tasks have the same priority. */
     #define QUANTUM 4
 #endif
 
+/* Static stack space to allocate for the init task. */
+#ifndef INIT_TASK_STACK_SIZE
+    #define INIT_TASK_STACK_SIZE 1024
+#endif
+

@@ -328,21 +328,13 @@ Signals signal_wait(const Signals signals);
 
 
 /**
-\brief Callback function for initialization of the first task
-to be scheduled.
+\brief User entry point to system.
 
-This function is for the purpose of the user to select a
-task to run att system start.  Only a call to task_init()
-with proper parameters is needed. Other initializations can
-be done here aswell.
-
-\note The multitasking kernel is not ready or running when this
-function is called so only a small set of kernel operations
-can be called. Only the list_ functions are considered safe.
-
-\return Pointer to the first task. Do not run task_schedule()
-on the task in init_task_init()!  */
-Task *init_task_init(void);
+The kernel is running multitasking when this function is called
+so all system calls can be used. This is the place to schedule
+user tasks. It is safe to return from this function.
+*/
+void user_init(void);
 
 
 typedef enum {

@@ -77,7 +77,8 @@ PRIVATE void taskcontext_init(
     taskcontext_verify(context);
 }
 
-PRIVATE void taskcontext_verify(TaskContext *const context) {
+PRIVATE void taskcontext_verify(TaskContext *const context)
+{
     assert((uintptr_t) context->bos <=
       (uintptr_t) context->frame);
     assert(((uintptr_t) context->frame + sizeof (StackFrame)) <=
@@ -143,20 +144,11 @@ void led_init(void)
     GPIO_WriteBit(GPIOD, GPIO_Pin_12 | GPIO_Pin_13, Bit_RESET);
 }
 
-StackFrame *martos_init(void) {
-    list_init(&ready);
-    list_init(&waiting);
-    list_init(&timers);
-    id_nestcnt = -1;
-    elapsed = QUANTUM;
+StackFrame *platform_pre(void)
+{
+    TaskContext *context;
 
-    /* Get initialized init task from user. */
-    Task *it = init_task_init();
-    /* Verify that he did it properly. */
-    task_verify(it);
-    /* Install it. */
-    it->state = TASK_RUNNING;
-    running = it;
+    context = martos_pre();
 
     NVIC_SetPriority(PendSV_IRQn, 0xFF);
     SysTick_Config(SysTick->CALIB & SysTick_CALIB_TENMS_Msk);
@@ -165,8 +157,8 @@ StackFrame *martos_init(void) {
     NVIC_SetPriority(SysTick_IRQn, 0);
     led_init();
 
-    __set_PSP((uint32_t) it->context.frame);
-    return it->context.frame;
+    __set_PSP((uint32_t) context->frame);
+    return context->frame;
 }
 
 static void SysTick_Handler(void)
@@ -183,7 +175,7 @@ static void SysTick_Handler(void)
 
 void *PendSV_Handler_user(StackFrame *old_frame)
 {
-    /* Check task that is switched out. */
+    /* Check task which is switched out. */
     task_verify(running);
     /* This is the only place where we may change the running pointer. */
 
@@ -223,14 +215,14 @@ void *PendSV_Handler_user(StackFrame *old_frame)
         /* We are already protected. */
     }
 
-    /* Check task that is switched in. */
+    /* Check task which is switched in. */
     task_verify(running);
     return running->context.frame;
 }
 
 static volatile Ticks timer_now;
 
-PRIVATE void timer_init(void)
+PRIVATE void timer_init_platform(void)
 {
     timer_now = 0;
 
@@ -260,11 +252,6 @@ PRIVATE void timer_init(void)
 Ticks timer_get_clock(void)
 {
     return timer_now;
-}
-
-PRIVATE void timer_update(void)
-{
-    /* Trig interrupt. */
 }
 
 static void TIM2_IRQHandler(void)

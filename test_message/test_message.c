@@ -25,22 +25,45 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef PLATFORM_PROTOS_H
-#define PLATFORM_PROTOS_H
+#include <assert.h>
+#include <stddef.h>
+#include <martos/martos.h>
+#include <test_common.h>
+#include <stm32f4xx.h>
+#include <stm32f4xx_tim.h>
+#include <stm32f4xx_gpio.h>
 
-PRIVATE void taskcontext_init(
-    TaskContext *const context,
-    void (*const init_pc) (void *const user_data),
-    void *const user_data,
-    void *const stack,
-    const uint32_t stack_size
-);
+Task t2;
+uint8_t t2_stack[TEST_STACK_SIZE];
 
-PRIVATE void taskcontext_verify(TaskContext *const context);
+void t2_f(void *user_data)
+{
+    while(1) {
+        GPIO_ToggleBits(GPIOD, GPIO_Pin_13);
+        timer_delay(299);
+        GPIO_ToggleBits(GPIOD, GPIO_Pin_13);
+        timer_delay(297);
+    }
+}
 
-PRIVATE void reschedule(void);
+void test_task_f(void *user_data)
+{
+    task_init(
+        &t2,
+        "t2",
+        -1,
+        (void (*const)(void *)) t2_f,
+        NULL,
+        &t2_stack,
+        TEST_STACK_SIZE
+    );
+    task_schedule(&t2);
 
-PRIVATE void timer_init_platform(void);
-
-#endif
+    while(1) {
+        GPIO_ToggleBits(GPIOD, GPIO_Pin_12);
+        timer_delay(1167);
+        GPIO_ToggleBits(GPIOD, GPIO_Pin_12);
+        timer_delay(1231);
+    }
+}
 

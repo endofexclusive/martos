@@ -40,18 +40,17 @@ void test_pass(void)
     }
 }
 
-Task *init_task_init(void)
+void user_init(void)
 {
     task_init(
         &test_task,
         "test",
-        TASK_PRIO_EXCLUSIVE,
+        0,
         (void (*const)(void *)) test_task_f,
         NULL,
         &test_task_stack,
         TEST_STACK_SIZE
     );
-
-    return &test_task;
+    task_schedule(&test_task);
 }
 

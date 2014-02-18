@@ -23,74 +23,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-CC=arm-none-eabi-gcc
-LD=arm-none-eabi-gcc
-AR=arm-none-eabi-ar
-AS=arm-none-eabi-gcc
-OBJDUMP=arm-none-eabi-objdump
+OBJS+= test_message.o
+TEST_COMMON=../test_common
 
-LDSCRIPT = $(PLATFORM_ROOT)/stm32f4.ld
-LDFLAGS+= -nostartfiles -T$(LDSCRIPT) -mcpu=cortex-m4 -mthumb -Wl,-Map=linker.map -Wl,--cref
-
-CFLAGS+= -std=c99
-CFLAGS+= -mcpu=cortex-m4 -mthumb
-#CFLAGS+= -DHSE_VALUE=8000000
-CFLAGS+= -I$(PLATFORM_ROOT)
-CFLAGS+= -I$(MARTOS_ROOT)/src
-CFLAGS+= -I$(MARTOS_ROOT)/include
-CFLAGS+= -I$(PLATFORM_ROOT)/cmsis
-
-ASFLAGS+=$(CFLAGS)
-ASFLAGS+=-c
-
-# Define ONE_NAMESPACE to compile most of the kernel in one
-# compilation unit.
-#ONE_NAMESPACE=1
-
-ifdef ONE_NAMESPACE
-    CFLAGS+=-DMARTOS_NAMESPACE
-    OBJS+=martos.o
-else
-    OBJS+=data.o
-    OBJS+=platform.o
-    OBJS+=list.o
-    OBJS+=init.o
-    OBJS+=task.o
-    OBJS+=msgport.o
-    OBJS+=timer.o
-endif
-
-OBJS+=system_stm32f4xx.o
-OBJS+=stm32f4xx_gpio.o
-OBJS+=stm32f4xx_rcc.o
-OBJS+=stm32f4xx_tim.o
-OBJS+=misc.o
-OBJS+=reset_handler.o
-OBJS+=pendsv_handler.o
-
-# Search path for MARTOS
-vpath %.c $(MARTOS_ROOT)/src
-
-# Search path for PLATFORM
-vpath %.c $(PLATFORM_ROOT)
-vpath %.c $(PLATFORM_ROOT)/cmsis
-vpath %.s $(PLATFORM_ROOT)
-
-
-$(NAME).elf: $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS) 
-	arm-none-eabi-size -d $@
-
-.PHONY: clean
-clean:
-	rm -f $(OBJS) $(OBJS:.o=.d) *.elf linker.map
-
-sources = $(OBJS:.o=.c)
--include $(sources:.c=.d)
-
-%.d: %.c
-	@set -e; rm -f $@; \
-	$(CC) -MM $(CFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
+include $(TEST_COMMON)/makefile.inc
 

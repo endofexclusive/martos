@@ -25,22 +25,46 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef PLATFORM_PROTOS_H
-#define PLATFORM_PROTOS_H
+#include <stddef.h>
+#include <martos/martos.h>
+#include "private.h"
+#include "default_config.h"
 
-PRIVATE void taskcontext_init(
-    TaskContext *const context,
-    void (*const init_pc) (void *const user_data),
-    void *const user_data,
-    void *const stack,
-    const uint32_t stack_size
-);
+static Task init_task;
+static uint8_t init_task_stack[INIT_TASK_STACK_SIZE];
+static void init_task_f(void *user_data);
 
-PRIVATE void taskcontext_verify(TaskContext *const context);
+TaskContext *martos_pre(void)
+{
+    list_init(&ready);
+    list_init(&waiting);
+    id_nestcnt = -1;
+    elapsed = QUANTUM;
 
-PRIVATE void reschedule(void);
+    task_init(
+        &init_task,
+        "init",
+        TASK_PRIO_EXCLUSIVE,
+        (void (*const)(void *)) init_task_f,
+        NULL,
+        &init_task_stack,
+        INIT_TASK_STACK_SIZE
+    );
 
-PRIVATE void timer_init_platform(void);
+    /* Verify init task parameters. */
+    task_verify(&init_task);
+    /* Install it. */
+    init_task.state = TASK_RUNNING;
+    running = &init_task;
+    return &init_task.context;
+}
 
-#endif
-
+static void init_task_f(void *user_data)
+{
+    timer_init();
+    user_init();
+    task_set_prio(&init_task, TASK_PRIO_MIN);
+    while(1) {
+        ;
+    }
+}

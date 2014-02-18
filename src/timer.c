@@ -34,6 +34,9 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "private.h"
 #include "platform_protos.h"
 
+/* List for timer requests. */
+static List timers;
+
 void timer_allocate(Timer *timer)
 {
     SignalNumber signum;
@@ -107,7 +110,8 @@ void timer_add(Timer *timer)
     tnode = (Timer *) timers.head.next;
     while (NULL != tnode->node.next) {
         /* For each Timer in timers. */
-        if (0 < tnode->tick - timer->tick) {
+        /* FIXME: Handle wrap-around! */
+        if (timer->tick < tnode->tick) {
             /* Tick in the new Timer is less than nt. Add the
             new Timer before the found timer. */
             list_insert(&timers, &timer->node, tnode->node.prev);
@@ -123,14 +127,6 @@ void timer_add(Timer *timer)
         list_add_tail(&timers, &timer->node);
     }
     timer->status = TIMER_ADDED;
-
-    #if 0
-    if (list_get_head(&timers) == &timer->node) {
-        /* Timer ended up in head of the queue so we must
-        notify the timer hardware. */
-        timer_update();
-    }
-    #endif
 }
 
 PRIVATE void timer_poll(void)
@@ -143,7 +139,8 @@ PRIVATE void timer_poll(void)
     tnode = (Timer *) timers.head.next;
     while (NULL != tnode->node.next) {
         /* For each Timer in timers. */
-        if (0 < tnode->tick - now) {
+        /* FIXME: Handle wrap-around! */
+        if (now < tnode->tick) {
             break;
         }
         /* Tick in tnode is greater than now. Remove and signal. */
@@ -153,5 +150,10 @@ PRIVATE void timer_poll(void)
         tnode = (Timer *) tnode->node.next;
     }
     enable();
+}
+
+PRIVATE void timer_init(void) {
+    list_init(&timers);
+    timer_init_platform();
 }
 

@@ -52,7 +52,7 @@ Reset_Handler:
     bl      SystemInit
     /* Set up data structures and init_task. PSP is initialized.
     */
-    bl  martos_init
+    bl  platform_pre
 
     /* Use process stack pointer and remain in privileged mode.
     User uses PSP. */

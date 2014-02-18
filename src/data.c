@@ -33,5 +33,4 @@ PRIVATE uint_fast8_t elapsed;
 PRIVATE Task *running;
 PRIVATE List ready;
 PRIVATE List waiting;
-PRIVATE List timers;
 
