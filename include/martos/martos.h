@@ -176,29 +176,6 @@ was found.
 Node *list_find(List *const start, char *const name);
 
 
-#if 0
-/**
-\brief Call a function on all nodes on a list.
-
-Traversal is from head to tail. The traversal ends when fn
-returns false or when the tail node has been visited.
-
-\param start The list to traverse. It can also be a node,
-in which case this node will be skipped.
-\param fn Function to call on each node. The node parameter
-is a handle to the visited node. Parameter
-arg to fn is the same as parameter arg to list_apply.
-\return Pointer to the first node for which fn returns true,
-or the list parameter if fn did never return true.
-*/
-List *list_apply(
-    List *const start,
-    bool (*fn)(Node *const node, void *const arg),
-    void *const arg
-);
-#endif
-
-
 /**
 \brief Disable interrupts.
 
@@ -327,6 +304,33 @@ void signal_send(Task *const task, const Signals signals);
 Signals signal_wait(const Signals signals);
 
 
+typedef struct {
+    Task *owner;
+    /* This list contains SemaphoreRequests. */
+    List req_queue;
+    int16_t nestcnt;
+} Semaphore;
+
+typedef struct {
+    MinNode node;
+    Task *waiter;
+    Signals signal;
+} SemaphoreRequest;
+
+void sem_free(Semaphore *const sem);
+void sem_obtain(Semaphore *const sem);
+/**
+\brief Add a signal request to a semaphore queue.
+
+The purpose of this function is to make it possible to do
+a signal_wait() where a semaphore is one of many signal
+sources. This allows for semaphores with time-out, blocking
+on one of many semaphores etc.
+*/
+bool sem_add_request(Semaphore *const sem, SemaphoreRequest *const req);
+void sem_release(Semaphore *const sem);
+
+
 /**
 \brief User entry point to system.
 
@@ -343,7 +347,6 @@ typedef enum {
 } MsgPort_Action;
 
 typedef struct {
-    Node node;
     List message_list;
     Task *task;
     Signals signal;
@@ -360,7 +363,7 @@ typedef struct {
 /**
 \brief Initialize a message port before use.
 */
-bool msgport_init(MsgPort *const port);
+void msgport_init(MsgPort *const port);
 
 
 Message *msgport_wait(MsgPort *const port);

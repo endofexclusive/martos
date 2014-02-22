@@ -25,7 +25,7 @@
 
 target extended-remote :4242
 file test.elf
-load
+#load
 
 break test_pass
 commands
@@ -41,5 +41,5 @@ commands
 end
 
 info registers
-cont
+#cont
 

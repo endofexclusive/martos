@@ -56,6 +56,7 @@ else
     OBJS+=list.o
     OBJS+=init.o
     OBJS+=task.o
+    OBJS+=semaphore.o
     OBJS+=msgport.o
     OBJS+=timer.o
 endif

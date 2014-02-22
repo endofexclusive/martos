@@ -34,21 +34,16 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <martos/martos.h>
 #include "private.h"
 
-bool msgport_init(MsgPort *const port)
+void msgport_init(MsgPort *const port)
 {
-    SignalNumber signal_bit;
+    SignalNumber signum;
 
-    signal_bit = signal_allocate(-1);
-    if (-1 == signal_bit) {
-        return false;
-    }
-    port->node.name = NULL;
-    port->node.prio = 0;
+    signum = signal_allocate(-1);
+    assert(-1 != signum);
+    port->signal = 1 << signum;
     port->action = MSGPORT_SIGNAL;
-    port->signal = 1 << signal_bit;
     port->task = running;
     list_init((&port->message_list));
-    return true;
 }
 
 Message *msgport_wait(MsgPort *const port)

@@ -40,6 +40,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "list.c"
 #include "init.c"
 #include "task.c"
+#include "semaphore.c"
 #include "msgport.c"
 #include "timer.c"
 

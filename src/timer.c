@@ -37,6 +37,22 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* List for timer requests. */
 static List timers;
 
+void timer_delay(Ticks ticks)
+{
+    Timer timer;
+
+    timer_allocate(&timer);
+    timer.op = TIMER_DELAY;
+    timer.delay = ticks;
+    timer_add(&timer);
+    if (TIMER_ADDED == timer.status) {
+        signal_wait(timer.signal);
+    } else {
+        /* Already elapsed. */
+    }
+    timer_free(&timer);
+}
+
 void timer_allocate(Timer *timer)
 {
     SignalNumber signum;
@@ -58,22 +74,6 @@ void timer_free(Timer *timer)
     signal_free(timer->signal);
     timer->op = TIMER_NONE;
     timer->status = TIMER_INVALID;
-}
-
-void timer_delay(Ticks ticks)
-{
-    Timer timer;
-
-    timer_allocate(&timer);
-    timer.op = TIMER_DELAY;
-    timer.delay = ticks;
-    timer_add(&timer);
-    if (TIMER_ADDED == timer.status) {
-        signal_wait(timer.signal);
-    } else {
-        /* Already elapsed. */
-    }
-    timer_free(&timer);
 }
 
 void timer_add(Timer *timer)
