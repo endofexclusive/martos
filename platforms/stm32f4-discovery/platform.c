@@ -93,9 +93,8 @@ PRIVATE void reschedule(void)
 /* Override standard library abort(). */
 void abort(void)
 {
-    while(1) {
-        ;
-    }
+    user_halt();
+    while(1);
 }
 
 /* Used by newlib assert. See assert.h. The function must not

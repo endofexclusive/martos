@@ -317,6 +317,7 @@ typedef struct {
     Signals signal;
 } SemaphoreRequest;
 
+void sem_allocate(Semaphore *const sem);
 void sem_free(Semaphore *const sem);
 void sem_obtain(Semaphore *const sem);
 /**
@@ -326,6 +327,10 @@ The purpose of this function is to make it possible to do
 a signal_wait() where a semaphore is one of many signal
 sources. This allows for semaphores with time-out, blocking
 on one of many semaphores etc.
+\return
+- true if request was added which means that we have to
+do a signal_wait on the semaphore request signal.
+- false otherwise.
 */
 bool sem_add_request(Semaphore *const sem, SemaphoreRequest *const req);
 void sem_release(Semaphore *const sem);
@@ -340,8 +345,15 @@ user tasks. It is safe to return from this function.
 */
 void user_init(void);
 
+/**
+\brief Halt kernel.
+
+All tasks are stopped.
+*/
+void user_halt(void);
 
 typedef enum {
+    MSGPORT_INVALID,
     MSGPORT_SIGNAL,
     MSGPORT_IGNORE
 } MsgPort_Action;
@@ -355,7 +367,7 @@ typedef struct {
 
 
 typedef struct {
-    Node node;
+    MinNode node;
     MsgPort *reply_port;
 } Message;
 

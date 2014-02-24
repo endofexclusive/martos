@@ -68,3 +68,9 @@ static void init_task_f(void *user_data)
         ;
     }
 }
+
+void user_halt(void)
+{
+    disable();
+    while(1);
+}

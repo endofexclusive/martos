@@ -35,7 +35,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static void sem_verify(Semaphore *const sem)
 {
-    assert(false);
+    assert(true);
 }
 
 void sem_allocate(Semaphore *const sem)
@@ -51,6 +51,8 @@ void sem_obtain(Semaphore *const sem)
     req.signal = SIGF_SINGLE;
     req.waiter = running;
     if (true == sem_add_request(sem, &req)) {
+        /* Request added, we have to wait for semaphore to be
+        released. */
         signal_wait(SIGF_SINGLE);
     } else {
         /* We have got it. */
@@ -68,13 +70,13 @@ bool sem_add_request(Semaphore *const sem, SemaphoreRequest *const req)
         our request but do not wait. */
         list_add_tail(&sem->req_queue, (Node *) req);
         enable();
-        return false;
+        return true;
     } else {
-        /* The semaphore is free. Take it. */ 
+        /* The semaphore is not owned, or we already have it. Take it. */ 
         sem->owner = running;
         sem->nestcnt++;
         enable();
-        return true;
+        return false;
     }
 }
 
@@ -92,6 +94,7 @@ void sem_release(Semaphore *const sem)
         req = (SemaphoreRequest *) list_rem_head(&sem->req_queue);
         if (NULL == req) {
             /* No one wants it. */
+            sem->owner = NULL;
         } else {
             /* Give new owner a nest count. */
             sem->nestcnt = 1;

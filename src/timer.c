@@ -106,6 +106,7 @@ void timer_add(Timer *timer)
     Timer *tnode;
     bool added = false;
 
+    timer->status = TIMER_ADDED;
     disable();
     tnode = (Timer *) timers.head.next;
     while (NULL != tnode->node.next) {
@@ -126,7 +127,7 @@ void timer_add(Timer *timer)
         end. */
         list_add_tail(&timers, &timer->node);
     }
-    timer->status = TIMER_ADDED;
+    enable();
 }
 
 PRIVATE void timer_poll(void)

@@ -34,6 +34,6 @@ ready tasks have the same priority. */
 
 /* Static stack space to allocate for the init task. */
 #ifndef INIT_TASK_STACK_SIZE
-    #define INIT_TASK_STACK_SIZE 1024
+    #define INIT_TASK_STACK_SIZE 2048
 #endif
 

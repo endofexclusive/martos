@@ -71,7 +71,7 @@ Message *msgport_get(MsgPort *const port)
     return msg;
 }
 
-void msgport_put(MsgPort *const port, Message *const message)
+void msgport_send(MsgPort *const port, Message *const message)
 {
     /* TODO: Check consistency of port->signal. */
     /* Assume that the port does not disappear, for example
@@ -80,6 +80,10 @@ void msgport_put(MsgPort *const port, Message *const message)
     /* Some rearrangements can be done to decrease time in
     the disable() state. */
     disable();
+    assert(
+        MSGPORT_SIGNAL == port->action ||
+        MSGPORT_IGNORE == port->action
+    );
     list_add_tail(&port->message_list, (Node *) message);
     /* Assume only port owner modifies non-list fields. */
     if ((NULL != port->task) &&
@@ -87,6 +91,9 @@ void msgport_put(MsgPort *const port, Message *const message)
         /* A task exists that waits for messages on this
         port. */
         signal_send(port->task, 1 << port->signal);
+    } else {
+        /* No task is waiting on the port. Just leave the
+        message. */
     }
     enable();
 }
@@ -101,6 +108,6 @@ void msgport_reply(Message *const message)
     assert(NULL != port);
     /* FIXME: Do some run-time error handling if port is
     NULL. */
-    msgport_put(port, message);
+    msgport_send(port, message);
 }
 
