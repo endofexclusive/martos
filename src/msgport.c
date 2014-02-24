@@ -90,7 +90,7 @@ void msgport_send(MsgPort *const port, Message *const message)
       (MSGPORT_SIGNAL == port->action)) {
         /* A task exists that waits for messages on this
         port. */
-        signal_send(port->task, 1 << port->signal);
+        signal_send(port->task, port->signal);
     } else {
         /* No task is waiting on the port. Just leave the
         message. */

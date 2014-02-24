@@ -62,8 +62,8 @@ TaskContext *martos_pre(void)
 static void init_task_f(void *user_data)
 {
     timer_init();
-    user_init();
     task_set_prio(&init_task, TASK_PRIO_MIN);
+    user_init();
     while(1) {
         ;
     }
