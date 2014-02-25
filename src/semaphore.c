@@ -33,19 +33,17 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* FIXME: All functions in this file need sanity checks
 (asserts). */
 
-static void sem_verify(Semaphore *const sem)
-{
-    assert(true);
-}
+/* This file implements a couting semaphore. TODO: Nesting
+support by adding a nestcnt to the SemaphoreRequest type which
+becomes a task private handle for the semaphore. */
 
-void sem_allocate(Semaphore *const sem)
+void sem_init(Semaphore *const sem, const SemaphoreCount count)
 {
-    sem->owner = NULL;
-    sem->nestcnt = 0;
+    sem->count = count;
     list_init(&sem->req_queue);
 }
 
-void sem_obtain(Semaphore *const sem)
+void sem_wait(Semaphore *const sem)
 {
     SemaphoreRequest req;
     req.signal = SIGF_SINGLE;
@@ -61,46 +59,50 @@ void sem_obtain(Semaphore *const sem)
 
 bool sem_add_request(Semaphore *const sem, SemaphoreRequest *const req)
 {
-    sem_verify(sem);
     /* We could temporarily set a very high priority instead
     of disable(). */
     disable();
-    if (NULL != sem->owner && (sem->owner != running)) {
+    sem->count--;
+    if (sem->count < 0) {
         /* Someone has the semaphore, and it is not us. Add
-        our request but do not wait. */
+        our request to the semaphores queue, but do not wait. */
         list_add_tail(&sem->req_queue, (Node *) req);
         enable();
         return true;
     } else {
-        /* The semaphore is not owned, or we already have it. Take it. */ 
-        sem->owner = running;
-        sem->nestcnt++;
+        /* We got one resource. */ 
         enable();
         return false;
     }
 }
 
-void sem_release(Semaphore *const sem)
+void sem_signal(Semaphore *const sem)
 {
     SemaphoreRequest *req;
 
-    sem_verify(sem);
     disable();
-    assert(sem->owner == running);
-    sem->nestcnt--;
-    if (0 == sem->nestcnt) {
-        /* Last nesting stage, check pending requests for the
-        semaphore. */
+    sem->count++;
+    if (sem->count < 0) {
+        /* There are pending requests in the queue. */
         req = (SemaphoreRequest *) list_rem_head(&sem->req_queue);
-        if (NULL == req) {
-            /* No one wants it. */
-            sem->owner = NULL;
-        } else {
-            /* Give new owner a nest count. */
-            sem->nestcnt = 1;
-            signal_send(req->waiter, req->signal);
-        }
+        assert(NULL != req);
+        assert(running != req->waiter);
+        assert(0 != req->signal);
+        signal_send(req->waiter, req->signal);
     }
     enable();
+}
+
+void sem_verify(Semaphore *const sem)
+{
+    /*
+    disable();
+    Loop over sem->req_queue:
+        Verify waiter.
+        Verify signal.
+    Assert that number of nodes match sem->count if negative.
+    Assert that list is empty if sem->count is 0 or greater.
+    enable();
+    */
 }
 

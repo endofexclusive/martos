@@ -106,8 +106,8 @@ void timer_add(Timer *timer)
     Timer *tnode;
     bool added = false;
 
-    timer->status = TIMER_ADDED;
     disable();
+    timer->status = TIMER_ADDED;
     tnode = (Timer *) timers.head.next;
     while (NULL != tnode->node.next) {
         /* For each Timer in timers. */
@@ -130,6 +130,15 @@ void timer_add(Timer *timer)
     enable();
 }
 
+void timer_abort(Timer *const timer)
+{
+    disable();
+    if (TIMER_ADDED == timer->status) {
+        list_unlink((Node *) timer);
+    }
+    enable();
+}
+
 PRIVATE void timer_poll(void)
 {
     Ticks now = timer_get_clock();
@@ -146,6 +155,7 @@ PRIVATE void timer_poll(void)
         }
         /* Tick in tnode is greater than now. Remove and signal. */
         list_unlink(&tnode->node);
+        tnode->status = TIMER_DONE;
         signal_send(tnode->task, tnode->signal);
         /* Next. */
         tnode = (Timer *) tnode->node.next;

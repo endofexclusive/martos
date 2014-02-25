@@ -303,23 +303,24 @@ void signal_send(Task *const task, const Signals signals);
 */
 Signals signal_wait(const Signals signals);
 
+typedef int_fast16_t SemaphoreCount;
 
 typedef struct {
-    Task *owner;
     /* This list contains SemaphoreRequests. */
     List req_queue;
-    int16_t nestcnt;
+    SemaphoreCount count;
 } Semaphore;
 
+/* Used for asynchronous semaphore operations. */
 typedef struct {
     MinNode node;
     Task *waiter;
     Signals signal;
 } SemaphoreRequest;
 
-void sem_allocate(Semaphore *const sem);
-void sem_free(Semaphore *const sem);
-void sem_obtain(Semaphore *const sem);
+void sem_init(Semaphore *const sem, const SemaphoreCount count);
+void sem_wait(Semaphore *const sem);
+void sem_signal(Semaphore *const sem);
 /**
 \brief Add a signal request to a semaphore queue.
 
@@ -333,7 +334,6 @@ do a signal_wait on the semaphore request signal.
 - false otherwise.
 */
 bool sem_add_request(Semaphore *const sem, SemaphoreRequest *const req);
-void sem_release(Semaphore *const sem);
 
 
 /**
@@ -426,7 +426,7 @@ typedef struct {
 
 \param ticks The number of ticks to wait for.
 */
-void timer_delay(Ticks ticks);
+void timer_delay(const Ticks ticks);
 
 
 /**
@@ -439,10 +439,10 @@ Ticks timer_get_clock(void);
 
 /** Allocate resources for Timer and prepare it.
 */
-void timer_allocate(Timer *timer);
+void timer_allocate(Timer *const timer);
 
 
-void timer_free(Timer *timer);
+void timer_free(Timer *const timer);
 
 
 /**
@@ -460,7 +460,7 @@ add the request:
 
 \param timer The Timer to add.
 */
-void timer_add(Timer *timer);
+void timer_add(Timer *const timer);
 
 
 /**
@@ -468,7 +468,7 @@ void timer_add(Timer *timer);
 
 \param timer The previoiusly added request to abort.
 */
-void timer_abort(Timer *timer);
+void timer_abort(Timer *const timer);
 
 #endif
 
