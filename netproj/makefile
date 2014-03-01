@@ -28,6 +28,7 @@ MARTOS_ROOT = ..
 PLATFORM_ROOT = ../platforms/stm32f4-discovery
 LWIP_ARCH = ../lwip_martos
 LWIP_SRC = ../lwip-1.4.1/src
+LWIP_LIB = $(PLATFORM_ROOT)/lwip/lwip.a
 OBJS+= n.o
 OBJS+= udpecho.o
 
@@ -36,7 +37,7 @@ CFLAGS = -O0
 CFLAGS+= -g
 CFLAGS+= -Wall #-Wextra -Wpedantic
 
-LDLIBS+= $(LWIP_ARCH)/lwip.a
+LDLIBS+= $(LWIP_LIB)
 
 #CFLAGS+= -I$(PLATFORM_ROOT)
 #CFLAGS+= -I$(MARTOS_ROOT)/src

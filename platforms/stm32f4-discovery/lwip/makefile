@@ -25,10 +25,10 @@
 
 # This file is hard coded to the STM32F4-DISCOVERY port of MARTOS.
 
-MARTOS_ROOT=..
-PLATFORM_ROOT = ../platforms/stm32f4-discovery
-LWIP_SRC=../lwip-1.4.1/src
-LWIP_ARCH=.
+MARTOS_ROOT=../../..
+PLATFORM_ROOT = ..
+LWIP_SRC=$(MARTOS_ROOT)/lwip-1.4.1/src
+LWIP_ARCH=$(MARTOS_ROOT)/lwip_martos
  
 CC=arm-none-eabi-gcc
 AR=arm-none-eabi-ar
@@ -78,6 +78,7 @@ vpath %.c $(LWIP_SRC)/core
 vpath %.c $(LWIP_SRC)/api
 vpath %.c $(LWIP_SRC)/netif
 vpath %.c $(LWIP_SRC)/core/ipv4
+vpath %.c $(LWIP_ARCH)
 
 lwip.a: $(OBJS)
 	$(AR) -r $@ $^
