@@ -65,7 +65,7 @@ void test_task_f(void *user_data)
     assert(&n1 == list_get_head(&l));
     list_enqueue(&l, &n2);
     assert(&n2 == list_get_head(&l));
-    node_unlink(&n1);
+    list_unlink(&n1);
     assert(&n2 == list_get_head(&l));
 
     list_enqueue(&l, &n1);

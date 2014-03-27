@@ -34,7 +34,9 @@ LDFLAGS+= -nostartfiles -T$(LDSCRIPT) -mcpu=cortex-m4 -mthumb -Wl,-Map=linker.ma
 
 CFLAGS+= -std=c99
 CFLAGS+= -mcpu=cortex-m4 -mthumb
-#CFLAGS+= -DHSE_VALUE=8000000
+CFLAGS+= -DHSE_VALUE=8000000
+CFLAGS+= -DUSE_STDPERIPH_DRIVER
+CFLAGS+= -DSTM32F4XX
 CFLAGS+= -I$(PLATFORM_ROOT)
 CFLAGS+= -I$(MARTOS_ROOT)/src
 CFLAGS+= -I$(MARTOS_ROOT)/include

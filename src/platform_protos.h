@@ -28,6 +28,13 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef PLATFORM_PROTOS_H
 #define PLATFORM_PROTOS_H
 
+/* Define your own platform specific StackFrame type somewhere
+else. We can't forward a typedef in C.
+
+struct StackFrame;
+typedef struct StackFrame StackFrame;
+*/
+
 PRIVATE void taskcontext_init(
     TaskContext *const context,
     void (*const init_pc) (void *const user_data),

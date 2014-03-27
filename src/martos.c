@@ -25,6 +25,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* This file allows for MARTOS to be be compiled in a single
+compilation unit. It allows for compiler optimization to be
+performed on functions and data that are private to the OS
+but defined in different C files. Use of this methodology
+and this file is not recommended as it breaks the idea of C
+modules and the performance boost is close to nothing.
+
+To use it, define ONE_NAMESPACE=1. */
 #include <stddef.h>
 #include <string.h>
 

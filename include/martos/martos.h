@@ -342,6 +342,8 @@ bool sem_add_request(Semaphore *const sem, SemaphoreRequest *const req);
 The kernel is running multitasking when this function is called
 so all system calls can be used. This is the place to schedule
 user tasks. It is safe to return from this function.
+\note This function must never call signal_wait(), directly
+or indirectly. task_init() and task_schedule() are safe though.
 */
 void user_init(void);
 
